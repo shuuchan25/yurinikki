@@ -1,19 +1,34 @@
 "use client";
 import { useState, useEffect, useRef } from "react";
 import { useTranslation } from "./LanguageProvider";
+import {
+  getChecklist,
+  toggleChecklist,
+  getNick,
+  LS_MODAL_SHOWN,
+  setModalShownStatus,
+} from "../utils/localStorage";
 import ExportPreview from "./ExportPreview";
 import PreviewModal from "./PreviewModal";
-import { getChecklist, toggleChecklist, getNick } from "../utils/localStorage";
 import { useRouter } from "next/navigation";
-import { ChevronLeft, CircleCheckBig, X, ChevronUp } from "lucide-react";
+import {
+  ChevronLeft,
+  CircleCheckBig,
+  X,
+  ChevronUp,
+  Text,
+  Image,
+  Info,
+} from "lucide-react";
 import Lily from "./Lily";
-import { motion, AnimatePresence } from "framer-motion";
+// import { motion, AnimatePresence } from "framer-motion";
 import { InView } from "react-intersection-observer";
 import { toast } from "react-hot-toast";
 import InfoModal from "./InfoModal";
 import ExportPreviewFlatGrid from "./ExportPreviewFlatGrid";
-
-import { fontWeight } from "html2canvas/dist/types/css/property-descriptors/font-weight";
+import ExportPreviewTextOnly from "./ExportPreviewTextOnly";
+import { toPng } from "html-to-image";
+import { scaleImageDataUrl } from "../utils/scaleImage";
 
 interface Work {
   id: number;
@@ -53,94 +68,64 @@ export default function WorksList({
     setChecked(toggleChecklist(categoryId, id));
   };
 
-  // Preview modal state
-  // const [showPreview, setShowPreview] = useState(false);
-  // const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const previewRef = useRef<HTMLDivElement>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [showModal, setShowModal] = useState(false);
-  const nickname = getNick();
+  const [nickname, setNickname] = useState<string | null>(null);
+  const [previewMode, setPreviewMode] = useState<"image" | "title">("image");
+  const [infoOpen, setInfoOpen] = useState(false);
 
-  // Generate preview (inline styles to avoid unsupported CSS funcs)
-  // const generatePreview = async () => {
-  //   // dynamic import
-  //   const html2canvas = (await import("html2canvas")).default;
-  //   const previewDiv = document.getElementById("preview-layout");
-  //   if (!previewDiv) {
-  //     alert("Preview element not found");
-  //     return;
-  //   }
+  useEffect(() => {
+    const shown = localStorage.getItem(LS_MODAL_SHOWN);
+    if (!shown) {
+      setInfoOpen(true);
+    }
+  }, []);
 
-  //   // tampilkan container (awalnya hidden via Tailwind)
-  //   previewDiv.style.display = "block";
+  const handleCloseModal = () => {
+    setModalShownStatus(true);
+    setInfoOpen(false);
+  };
 
-  //   // tunggu CSS (Tailwind) apply & gambar load
-  //   await new Promise((r) => setTimeout(r, 200));
-  //   const imgs = Array.from(previewDiv.querySelectorAll("img"));
-  //   await Promise.all(
-  //     imgs.map(
-  //       (img) =>
-  //         new Promise<void>((res) => {
-  //           if ((img as HTMLImageElement).complete) return res();
-  //           img.addEventListener("load", () => res());
-  //           img.addEventListener("error", () => res());
-  //         })
-  //     )
-  //   );
+  useEffect(() => {
+    // Ini hanya jalan di client/browser
+    setNickname(getNick());
+  }, []);
 
-  //   try {
-  //     const canvas = await html2canvas(previewDiv, {
-  //       backgroundColor: null, // gunakan CSS background yang ada
-  //       useCORS: true,
-  //       allowTaint: false,
-  //       windowWidth: previewDiv.scrollWidth,
-  //       windowHeight: previewDiv.scrollHeight,
-  //       scrollX: -window.scrollX,
-  //       scrollY: -window.scrollY,
-  //       onclone: (clonedDoc) => {
-  //         // pastikan clone juga terlihat
-  //         const cloned = clonedDoc.getElementById("preview-layout");
-  //         if (cloned) cloned.style.display = "block";
-  //       },
-  //     });
-
-  //     const url = canvas.toDataURL("image/png");
-  //     setPreviewUrl(url);
-  //     setShowPreview(true);
-  //   } catch (err) {
-  //     console.error("Preview error:", err);
-  //     alert("Gagal membuat preview. Cek console.");
-  //   } finally {
-  //     // sembunyikan lagi
-  //     previewDiv.style.display = "none";
-  //   }
-  // };
   // const generatePreview = async () => {
   //   if (!previewRef.current) return alert("Preview not found");
 
-  //   // pastikan fonts dan images ready
+  //   // Show loading toast
+  //   const loadingToast = toast.loading("Generating preview...");
+
+  //   // PASTIKAN font sudah ready
   //   await document.fonts.ready;
+
+  //   // Tambah delay supaya font benar-benar ter-apply (kadang perlu di device lambat)
+  //   await new Promise((r) => setTimeout(r, 150));
+
   //   const el = previewRef.current;
 
-  //   // tampilkan (override display:none)
-  //   el.style.display = "block";
-
-  //   // tunggu sejenak agar CSS eksternal ter-apply
-  //   await new Promise((r) => setTimeout(r, 50));
+  //   // (Optional) Uji font di elemen preview, pastikan sudah font custom
+  //   console.log(window.getComputedStyle(el).fontFamily);
 
   //   const { default: html2canvas } = await import("html2canvas");
   //   try {
   //     const canvas = await html2canvas(el, {
   //       useCORS: true,
-  //       allowTaint: true, // <— ini
-  //       backgroundColor: null, // pakai CSS background
-  //       scale: 2, // <— optional untuk resolusi lebih tinggi
+  //       allowTaint: true,
+  //       backgroundColor: null,
+  //       scale: 1, // ganti ke 1.5 hanya jika memang butuh resolusi ekstra
   //       onclone: (doc) => {
-  //         // pastikan clone container juga tampil
-  //         const clone = doc.querySelector("[data-export-preview]");
-  //         if (clone) {
-  //           (clone as HTMLElement).style.display = "block";
-  //         }
+  //         // Salin link atau style font dari head asli ke head clone
+  //         const originLinks = document.querySelectorAll(
+  //           'link[rel="stylesheet"], style'
+  //         );
+  //         originLinks.forEach((link) => {
+  //           doc.head.appendChild(link.cloneNode(true));
+  //         });
+  //         // Optional: Set ulang font family langsung ke body clone
+  //         doc.body.style.fontFamily = "'Noto Sans JP', 'sans-serif'";
   //       },
   //     });
 
@@ -151,70 +136,63 @@ export default function WorksList({
   //     console.error(err);
   //     alert("Gagal membuat preview");
   //   } finally {
-  //     // sembunyikan lagi
-  //     el.style.display = "none";
+  //     toast.dismiss(loadingToast);
   //   }
   // };
+
   const generatePreview = async () => {
     if (!previewRef.current) return alert("Preview not found");
 
-    // Show loading toast
-    const loadingToast = toast.loading("Generating preview...");
-    console.log("Toast loading displayed");
+    const loadingToast = toast.loading(
+      `${lang === "jp" ? "画像の作成中…" : "Generating image..."}`
+    );
 
+    // TIPS: Pastikan semua font sudah ready!
     await document.fonts.ready;
 
-    // Tidak perlu display = block/none lagi!
-    const el = previewRef.current;
-
-    // Tunggu sebentar jika perlu
-    await new Promise((r) => setTimeout(r, 50));
-
-    const { default: html2canvas } = await import("html2canvas");
+    // Pakai html-to-image
     try {
-      const canvas = await html2canvas(el, {
-        useCORS: true,
-        allowTaint: true,
-        backgroundColor: null,
-        scale: 1.5,
-        onclone: (doc) => {
-          // optional: tidak perlu set display block
+      const dataUrl = await toPng(previewRef.current, {
+        cacheBust: true,
+        // backgroundColor: "#fff", // opsional
+        style: {
+          fontFamily: "'Noto Sans JP', 'sans-serif'",
         },
       });
-
-      const url = canvas.toDataURL("image/png");
-      setPreviewUrl(url);
+      const scaledUrl = await scaleImageDataUrl(dataUrl, 0.5);
+      setPreviewUrl(scaledUrl);
       setShowModal(true);
     } catch (err) {
-      console.error(err);
-      alert("Gagal membuat preview");
+      console.error("Failed to generate image.", err);
+      toast.error(
+        `${
+          lang === "jp" ? "画像作成が完了しました" : "Failed to generate image."
+        }`
+      );
     } finally {
-      // Dismiss the loading toast after processing is complete
-      toast.dismiss(loadingToast); // Dismissing the loading toast
+      toast.dismiss(loadingToast);
+      toast.success(
+        `${
+          lang === "jp"
+            ? "画像作成が完了しました。"
+            : "Image successfully generated."
+        }`
+      );
     }
-    // Tidak perlu display: none
-  };
-
-  // Download preview image
-  const handleSave = () => {
-    if (!previewUrl) return;
-    const a = document.createElement("a");
-    a.href = previewUrl;
-    a.download = `preview_${categoryRomaji}.png`;
-    a.click();
   };
 
   const handleDownload = () => {
     if (!previewUrl) return;
     const a = document.createElement("a");
     a.href = previewUrl;
-    a.download = `preview_${categoryRomaji}.png`;
+    a.download = `yurinikki_${categoryRomaji}.png`;
     a.click();
   };
 
   return (
-    <div className="relative p-4 sm:p-6 scroll-smooth ">
-      <InfoModal /> {/* Modal yang akan tampil pertama kali */}
+    <div className="relative px-4 pt-4 pb-12 sm:p-6 scroll-smooth ">
+      <InfoModal isVisible={infoOpen} onClose={handleCloseModal} />
+      {/* Modal yang akan tampil pertama kali */}
       <div className="fixed bottom-4 right-4 p-2 rounded-full bg-slate-200 text-slate-950 z-10">
         <a href="#top" className="">
           <ChevronUp />
@@ -238,56 +216,63 @@ export default function WorksList({
           {lang === "jp" ? categoryName : categoryRomaji}
         </p>
         {/* Tampilkan nickname */}
-        <p className="text-center text-sm text-slate-500">
-          {nickname ? `Hello, ${nickname}!` : "Hello, Guest!"}
+        <p className="text-wrap text-center mt-6 text-slate-500">
+          {nickname && lang === "jp"
+            ? `こんにちは、${nickname}!`
+            : `Hello, ${nickname}!`}
         </p>
       </div>
-      {/* <div className="flex items-center justify-between mb-8">
-        <div className="flex items-center gap-6">
-          <Lily className="w-[64px]" />
-          <div className="">
-            <h1
-              // className="app__title"
-              className="text-xl font-bold  pb-2 border-b-2 border-slate-800 mb-2"
-              style={{}}
-            >
-              {t("appTitle")}
-            </h1>
-            <p className="font-bold text-xl">
-              {lang === "jp" ? categoryName : categoryRomaji}
-            </p>
-          </div>
-        </div>
-      </div> */}
       <div className="sticky top-0 bg-[#0b111d] z-10 p-4 mb-8 border-b-2 border-t-2">
         <div className="flex justify-between items-center w-full ">
-          <button
-            onClick={() => router.back()}
-            className="inline-flex text-slate-400 hover:text-slate-200 transition-all"
-          >
-            <ChevronLeft /> {t("back")}
-          </button>
-          {/* Statistik */}
-          <div className="flex flex-col md:flex-row justify-center md:justify-end items-end md:items-center gap-2">
-            <span className="md:pe-2 md:border-e-2 md:border-slate-800">
-              {t("total")} : {works.length}
-            </span>
-            <span className="text-[#00c951] font-semibold">
-              {t("checked")} : {checked.length}
-            </span>
-          </div>
-          {/* Tombol Preview */}
-          <div className="mt-6">
+          <div className="flex flex-col justify-between h-full gap-6">
             <button
-              onClick={generatePreview}
-              className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
+              onClick={() => router.back()}
+              className="inline-flex text-slate-400 hover:text-slate-200 transition-all cursor-pointer"
             >
-              {t("preview")}
+              <ChevronLeft /> {t("back")}
             </button>
+          </div>
+          {/* Statistik */}
+          <div className="">
+            <div className="flex flex-col md:flex-row justify-center md:justify-end items-end md:items-center gap-2">
+              <span className="md:pe-2 md:border-e-2 md:border-slate-800">
+                {t("total")} : {works.length}
+              </span>
+              <span className="text-[#00c951] font-semibold">
+                {t("checked")} : {checked.length}
+              </span>
+            </div>
+            <div className="mt-4 flex gap-2 justify-end items-center">
+              <button
+                onClick={() => {
+                  setPreviewMode("image");
+                  generatePreview();
+                }}
+                className="flex items-center justify-center text-sm gap-2 px-2 py-2 md:px-4 md:py-2 bg-rose-600 text-white rounded hover:bg-rose-700 transition-all"
+              >
+                <Image />
+                <span className="hidden md:block"> {t("preview")}</span>
+              </button>
+              <button
+                onClick={() => {
+                  setPreviewMode("title");
+                  generatePreview();
+                }}
+                className="flex items-center justify-center text-sm gap-2 px-2 py-2 md:px-4 md:py-2 bg-rose-600 text-white rounded hover:bg-rose-700 transition-all"
+              >
+                <Text />
+                <span className="hidden md:block"> {t("preview")}</span>
+              </button>
+              <button
+                onClick={() => setInfoOpen(true)}
+                className="flex items-center justify-center text-sm gap-2 px-2 py-2 md:px-4 md:py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-all"
+              >
+                <Info />
+              </button>
+            </div>
           </div>
         </div>
       </div>
-      {/* Live listing */}
       {/* Live listing with scroll animation */}
       <div className="space-y-8">
         {Object.entries(grouped).map(([year, items]) => (
@@ -298,7 +283,7 @@ export default function WorksList({
               </h2>
               <span className="flex-1 border border-slate-200 rounded-full"></span>
             </div>
-            <div className="grid grid-cols-3 md:grid-cols-6 lg:grid-cols-8 gap-2 sm:gap-4">
+            <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 gap-2 sm:gap-4">
               {items.map((w) => (
                 <InView
                   key={w.id}
@@ -309,22 +294,26 @@ export default function WorksList({
                     <div
                       ref={ref}
                       onClick={() => onToggle(w.id)}
-                      className={`relative cursor-pointer rounded overflow-hidden border hover:shadow-lg transition ${
+                      className={`flex flex-col cursor-pointer rounded overflow-hidden border-2 hover:shadow-lg transition ${
                         inView
                           ? "opacity-100 transform translate-y-0"
                           : "opacity-0 transform translate-y-10"
+                      }  ${
+                        checked.includes(w.id)
+                          ? "border-2 border-[#00c951]"
+                          : "border"
                       } transition-all duration-700`}
                     >
                       <div className="relative">
                         {/* Gambar */}
-                        <div className="aspect-4/5 w-full overflow-hidden">
+                        <div className="aspect-2/3 w-full overflow-hidden">
                           <img
                             src={w.image}
                             alt={lang === "jp" ? w.name : w.romaji}
                             className={`w-full h-full object-cover transition-all ease-in select-none pointer-events-none ${
                               checked.includes(w.id)
                                 ? "brightness-100"
-                                : "brightness-50"
+                                : "brightness-30"
                             }`}
                             draggable="false"
                           />
@@ -343,7 +332,7 @@ export default function WorksList({
                       </div>
 
                       {/* Nama */}
-                      <div className="flex justify-center items-center w-full p-2 mt-1 ">
+                      <div className="flex  justify-center items-center w-full h-full px-2 py-3 ">
                         <p className="text-center text-xs sm:text-sm">
                           {lang === "jp" ? w.name : w.romaji}
                         </p>
@@ -356,60 +345,36 @@ export default function WorksList({
           </div>
         ))}
       </div>
+
+      <div className="w-full flex items-center justify-center pt-4 px-2 mt-12 border-t">
+        <div className="footer__info text-center">
+          <p>百合日記 || yurinikki.vercel.app</p>
+          <p>制作 || しゅうちゃん</p>
+        </div>
+      </div>
       <ExportPreview ref={previewRef}>
-        {/* Hidden preview layout */}
-        <div
-          data-export-preview
-          id="preview-layout"
-          // className=" bg-[#1d293d] w-[1440px] h-[2048px] text-[#f9fafb] p-8"
-        >
-          <ExportPreviewFlatGrid
-            works={works}
-            checked={checked}
-            lang={lang}
-            categoryName={categoryName}
-            categoryRomaji={categoryRomaji}
-          />
+        <div data-export-preview id="preview-layout">
+          {previewMode === "image" ? (
+            <ExportPreviewFlatGrid
+              works={works}
+              checked={checked}
+              lang={lang}
+              categoryName={categoryName}
+              categoryRomaji={categoryRomaji}
+              nickname={nickname ?? ""}
+            />
+          ) : (
+            <ExportPreviewTextOnly
+              works={works}
+              checked={checked}
+              lang={lang}
+              categoryName={categoryName}
+              categoryRomaji={categoryRomaji}
+              nickname={nickname ?? ""}
+            />
+          )}
         </div>
       </ExportPreview>
-      {/* Modal Overlay */}
-      {/* {showPreview && previewUrl && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-slate-800 rounded-lg overflow-hidden w-11/12 max-w-2xl">
-            <div className="flex justify-between items-center p-4 border-b">
-              <h2 className="text-lg font-semibold">{t("preview")}</h2>
-              <button
-                onClick={() => setShowPreview(false)}
-                className="text-slate-600 hover:text-slate-400 transition-all"
-              >
-                <X />
-              </button>
-            </div>
-            <div className="p-4">
-              <img
-                src={previewUrl}
-                alt="Preview"
-                className="w-full h-auto rounded"
-              />
-            </div>
-            <div className="flex justify-end p-4 border-t space-x-2">
-              <button
-                onClick={handleSave}
-                className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-              >
-                {t("save")}
-              </button>
-              <button
-                onClick={() => setShowPreview(false)}
-                className="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400"
-              >
-                {t("close")}
-              </button>
-            </div>
-          </div>
-        </div>
-      )} */}
-      {/* Modal untuk preview + download */}
       <PreviewModal
         show={showModal}
         onClose={() => setShowModal(false)}

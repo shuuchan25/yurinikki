@@ -150,6 +150,7 @@ export default async function handler(
       where.OR = [
         { name: { contains: keyword, mode: "insensitive" } },
         { romaji: { contains: keyword, mode: "insensitive" } },
+        { image: { contains: keyword, mode: "insensitive" } },
       ];
     }
 

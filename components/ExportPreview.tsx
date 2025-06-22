@@ -19,16 +19,16 @@ const ExportPreview = forwardRef<
       ref={innerRef}
       className="text-[#f9fafb] p-8"
       style={{
-        position: "absolute",
+        position: "fixed",
         left: 0,
-        // top: "100vh", // di bawah layar
+        top: "100vh", // di bawah layar
         opacity: 1,
         pointerEvents: "none",
         display: "block",
         backgroundColor: bgColor,
         width: `${width}px`,
         fontFamily: "sans-serif",
-        // zIndex: -9999,
+        zIndex: -9999,
         ...style,
       }}
     >

@@ -4,6 +4,7 @@ import axios from "axios";
 import { signOut, useSession } from "next-auth/react";
 import useSWR from "swr";
 import AnilistQuickSearch from "./AnilistQuickSearch";
+import { toast } from "react-hot-toast";
 
 const fetcher = (url: string) =>
   fetch(url, { credentials: "include" }).then((res) => {
@@ -127,45 +128,70 @@ export default function AdminDashboard() {
   // --- HANDLER WORKS ---
   const handleWorkSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    let url = workForm.image;
-    let public_id = workForm.imagePublicId;
 
-    if (workFile) {
-      const up = await uploadFile(workFile);
-      url = up.url;
-      public_id = up.public_id;
-    }
+    await toast.promise(
+      (async () => {
+        let url = workForm.image;
+        let public_id = workForm.imagePublicId;
 
-    const payload = {
-      id: workForm.id,
-      name: workForm.name,
-      romaji: workForm.romaji,
-      releaseYear: workForm.releaseYear,
-      categoryId: selectedCat,
-      imageUrl: url,
-      imageFile: undefined,
-      imagePublicId: public_id,
-    };
+        // Jika image dari Anilist (atau bukan Cloudinary)
+        if (url && url.includes("anilist.co")) {
+          const res = await fetch("/api/upload-from-url", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ imageUrl: url }),
+          });
+          if (!res.ok) {
+            alert("Gagal upload gambar ke Cloudinary");
+            return;
+          }
+          const json = await res.json();
+          url = json.url;
+          public_id = json.public_id;
+        } else if (workFile) {
+          // Jika upload manual via file
+          const up = await uploadFile(workFile);
+          url = up.url;
+          public_id = up.public_id;
+        }
 
-    const method = workForm.id ? "PUT" : "POST";
-    await fetch("/api/works", {
-      method,
-      headers: { "Content-Type": "application/json" },
-      credentials: "include",
-      body: JSON.stringify(payload),
-    });
+        const payload = {
+          id: workForm.id,
+          name: workForm.name,
+          romaji: workForm.romaji,
+          releaseYear: workForm.releaseYear,
+          categoryId: selectedCat,
+          imageUrl: url,
+          imageFile: undefined,
+          imagePublicId: public_id,
+        };
 
-    setWorkFile(null);
-    setWorkForm({
-      id: undefined,
-      name: "",
-      romaji: "",
-      releaseYear: new Date().getFullYear(),
-      categoryId: selectedCat,
-      image: "",
-      imagePublicId: undefined,
-    });
-    mutateWorks();
+        const method = workForm.id ? "PUT" : "POST";
+        await fetch("/api/works", {
+          method,
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify(payload),
+        });
+
+        setWorkFile(null);
+        setWorkForm({
+          id: undefined,
+          name: "",
+          romaji: "",
+          releaseYear: new Date().getFullYear(),
+          categoryId: selectedCat,
+          image: "",
+          imagePublicId: undefined,
+        });
+        mutateWorks();
+      })(),
+      {
+        loading: "Menyimpan data...",
+        success: "Data berhasil disimpan!",
+        error: (err) => err.message || "Gagal menyimpan data",
+      }
+    );
   };
 
   // --- Handle Anime Select for Edit or Add ---

@@ -19,7 +19,7 @@ interface Props {
   nickname: string;
 }
 
-export default function ExportPreviewFlatGridFilled({
+export default function ExportPreviewFlatGridTextOnly({
   works,
   checked,
   lang,
@@ -32,53 +32,46 @@ export default function ExportPreviewFlatGridFilled({
     (a, b) => a.releaseYear - b.releaseYear || a.id - b.id
   );
 
-  const columns = 18; // jumlah kolom per baris
+  const columns = 12; // jumlah kolom per baris
   const totalItems = sorted.length;
 
-  // Bagi dua, lalu bulatkan ke kelipatan columns terdekat, tapi tidak lebih dari totalItems
+  // Bagi dua, bulatkan ke kelipatan columns terdekat
   const approxHalf = totalItems / 2;
   const topItemsCount = Math.min(
     Math.round(approxHalf / columns) * columns,
     totalItems
   );
-  const bottomItemsCount = totalItems - topItemsCount;
-
-  // Bagi item sesuai hasil pembulatan
-  const topItems = sorted.slice(0, topItemsCount); // Atas
-  const bottomItems = sorted.slice(topItemsCount); // Bawah
+  const topItems = sorted.slice(0, topItemsCount);
+  const bottomItems = sorted.slice(topItemsCount);
 
   let elements: React.ReactNode[] = [];
 
   // 1. Grid atas
   elements.push(
-    <div className="grid grid-cols-18 gap-1" key="top-items">
+    <div
+      className="preview__item__wrapper grid grid-cols-12 gap-1 items-stretch"
+      key="top-items-text"
+    >
       {topItems.map((w) => (
         <div
           key={w.id}
-          className={`flex flex-col items-center relative rounded overflow-hidden hover:shadow-lg transition select-none ${
-            checked.includes(w.id)
-              ? "border-2 border-[#00c951]"
-              : "border border-[#0f172b]"
-          }`}
+          className={`preview__item
+        ${
+          checked.includes(w.id)
+            ? "border-2 border-[#00c951] bg-[#00c951]"
+            : "border border-[#0f172b] bg-[#111827]"
+        }`}
+          // Tidak perlu style height apapun!
         >
-          <div className="relative aspect-2/3 w-full h-full overflow-hidden">
-            <img
-              src={w.image}
-              alt={lang === "jp" ? w.name : w.romaji}
-              className="preview__cover select-none pointer-events-none"
-              draggable="false"
-              loading="lazy"
-            />
-            {!checked.includes(w.id) && (
-              <div className="absolute inset-0 bg-black opacity-70 pointer-events-none"></div>
-            )}
-          </div>
+          <span className="w-full text-center break-words whitespace-normal">
+            {lang === "jp" ? w.name : w.romaji}
+          </span>
         </div>
       ))}
     </div>
   );
 
-  // 2. Konten tengah
+  // 2. Konten tengah (copy dari template gambar)
   elements.push(
     <div
       key="middle-content"
@@ -133,35 +126,28 @@ export default function ExportPreviewFlatGridFilled({
 
   // 3. Grid bawah
   elements.push(
-    <div className="grid grid-cols-18 gap-1" key="bottom-items">
+    <div
+      className="preview__item__wrapper grid grid-cols-12 gap-1"
+      key="bottom-items-text"
+    >
       {bottomItems.map((w) => (
         <div
           key={w.id}
-          className={`flex flex-col items-center relative rounded overflow-hidden hover:shadow-lg transition select-none ${
+          className={`preview__item
+          ${
             checked.includes(w.id)
-              ? "border-2 border-[#00c951]"
-              : "border border-[#0f172b]"
+              ? "border-2 border-[#00c951] bg-[#00c951]"
+              : "border border-[#0f172b] bg-[#111827]"
           }`}
+          // Tidak perlu style height apapun!
         >
-          <div className="relative aspect-2/3 w-full h-full overflow-hidden">
-            <img
-              src={w.image}
-              alt={lang === "jp" ? w.name : w.romaji}
-              className="w-full h-full object-cover select-none pointer-events-none"
-              draggable="false"
-              loading="lazy"
-            />
-            {!checked.includes(w.id) && (
-              <div className="absolute inset-0 bg-black opacity-70 pointer-events-none"></div>
-            )}
-          </div>
+          <span className="w-full text-center break-words whitespace-normal">
+            {lang === "jp" ? w.name : w.romaji}
+          </span>
         </div>
       ))}
     </div>
   );
-
-  // 4. Footer info
-  elements.push();
 
   return <div>{elements}</div>;
 }

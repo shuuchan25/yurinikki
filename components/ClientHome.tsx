@@ -28,7 +28,7 @@ export default function ClientHome({ categories }: { categories: Category[] }) {
   return (
     <div className="h-[100dvh] flex flex-col items-center justify-center p-2">
       <div className="flex flex-col items-center justify-center gap-2">
-        <Lily className="w-28" />
+        <Lily className="w-20" />
         <h1 className="text-3xl font-extrabold text-center mb-6">
           {t("appTitle")}
         </h1>
@@ -130,6 +130,10 @@ export default function ClientHome({ categories }: { categories: Category[] }) {
             {t("start")}
           </button>
         </div>
+      </div>
+      <div className="footer__info text-center mt-5">
+        <p>百合日記 || yurinikki.vercel.app</p>
+        <p>制作 || しゅうちゃん</p>
       </div>
     </div>
   );

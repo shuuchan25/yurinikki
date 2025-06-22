@@ -1,7 +1,7 @@
 {
   "appTitle": "百合日記",
   "language": "言語",
-  "nickname": "ニックネーム",
+  "nickname": "名前",
   "category": "カテゴリー",
   "start": "開始",
   "signIn": "サインイン",
@@ -12,6 +12,8 @@
   "total": "総数",
   "checked": "視聴済み",
   "preview": "プレビュー",
+  "yurinohi": "百合の日",
+  "previewSentence": "今までに観た百合のあるアニメ",
   "shareText": "",
   "close": "閉じる",
   "save": "保存",
