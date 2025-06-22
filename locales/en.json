@@ -1,0 +1,22 @@
+{
+  "appTitle": "Yuri Checklist",
+  "language": "Language",
+  "nickname": "Nickname",
+  "category": "Category",
+  "start": "Start",
+  "signIn": "Sign In",
+  "username": "Username",
+  "password": "Password",
+  "dashboard": "Admin Dashboard",
+  "back": "戻る",
+  "total": "",
+  "checked": "",
+  "preview": "",
+  "shareText": "",
+  "close": "",
+  "save": "",
+  "modalHeader": "",
+  "modalContent": "",
+  "modalButton": "",
+  "modalWarn": ""
+}
