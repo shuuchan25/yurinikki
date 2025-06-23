@@ -29,6 +29,8 @@ import ExportPreviewFlatGrid from "./ExportPreviewFlatGrid";
 import ExportPreviewTextOnly from "./ExportPreviewTextOnly";
 import { toPng } from "html-to-image";
 import { scaleImageDataUrl } from "../utils/scaleImage";
+import ExportPreviewPortal from "./ExportPreviewPortal";
+import ExportPreviewHtmlModal from "./ExportPreviewHTMLModal";
 
 interface Work {
   id: number;
@@ -69,11 +71,15 @@ export default function WorksList({
   };
 
   const previewRef = useRef<HTMLDivElement>(null);
+  const downloadRef = useRef<HTMLDivElement>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [showModal, setShowModal] = useState(false);
   const [nickname, setNickname] = useState<string | null>(null);
   const [previewMode, setPreviewMode] = useState<"image" | "title">("image");
   const [infoOpen, setInfoOpen] = useState(false);
+  const [showExportModal, setShowExportModal] = useState(false);
+  const [downloading, setDownloading] = useState(false);
+  const exportPreviewRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const shown = localStorage.getItem(LS_MODAL_SHOWN);
@@ -149,6 +155,7 @@ export default function WorksList({
 
     // TIPS: Pastikan semua font sudah ready!
     await document.fonts.ready;
+    await new Promise((r) => setTimeout(r, 200));
 
     // Pakai html-to-image
     try {
@@ -162,13 +169,21 @@ export default function WorksList({
       const scaledUrl = await scaleImageDataUrl(dataUrl, 0.5);
       setPreviewUrl(scaledUrl);
       setShowModal(true);
+      // } catch (err) {
+      //   console.error("Failed to generate image.", err);
+      //   toast.error(
+      //     `${
+      //       lang === "jp" ? "画像作成が完了しました" : "Failed to generate image."
+      //     }`
+      //   );
+      // }
     } catch (err) {
-      console.error("Failed to generate image.", err);
-      toast.error(
-        `${
-          lang === "jp" ? "画像作成が完了しました" : "Failed to generate image."
-        }`
-      );
+      console.error("Failed to generate image.", err, JSON.stringify(err));
+      if (err instanceof Error) {
+        toast.error(err.message);
+      } else {
+        toast.error("Unknown error");
+      }
     } finally {
       toast.dismiss(loadingToast);
       toast.success(
@@ -179,6 +194,50 @@ export default function WorksList({
         }`
       );
     }
+  };
+
+  const handleExportDownload = async () => {
+    if (!exportPreviewRef.current) return;
+    setDownloading(true);
+    const loadingToast = toast.loading(
+      `${lang === "jp" ? "画像の作成中…" : "Generating image..."}`
+    );
+    await document.fonts.ready;
+    try {
+      // 1. Generate dataUrl dari HTML
+      const dataUrl = await toPng(exportPreviewRef.current, {
+        cacheBust: true,
+        style: { fontFamily: "'Noto Sans JP', 'sans-serif'" },
+      });
+
+      // 2. Kecilkan skala hasil PNG
+      const scaledUrl = await scaleImageDataUrl(dataUrl, 0.5); // Ganti 0.5 sesuai kebutuhan!
+
+      // 3. Download
+      const a = document.createElement("a");
+      a.href = scaledUrl;
+      a.download = `yurinikki_${categoryRomaji}.png`;
+      a.click();
+      toast.success("Image downloaded!");
+    } catch (e) {
+      toast.error(
+        `${
+          lang === "jp"
+            ? "画像作成が失敗しました。"
+            : "Failed to generate image."
+        }`
+      );
+      console.error(e);
+    }
+    setDownloading(false);
+    toast.dismiss();
+    toast.success(
+      `${
+        lang === "jp"
+          ? "画像作成が完了しました。"
+          : "Image successfully generated."
+      }`
+    );
   };
 
   const handleDownload = () => {
@@ -244,9 +303,14 @@ export default function WorksList({
             </div>
             <div className="mt-4 flex gap-2 justify-end items-center">
               <button
+                // onClick={() => {
+                //   setPreviewMode("image");
+                //   generatePreview();
+                // }}
+
                 onClick={() => {
                   setPreviewMode("image");
-                  generatePreview();
+                  setShowExportModal(true);
                 }}
                 className="flex items-center justify-center text-sm gap-2 px-2 py-2 md:px-4 md:py-2 bg-rose-600 text-white rounded hover:bg-rose-700 transition-all"
               >
@@ -254,9 +318,14 @@ export default function WorksList({
                 <span className="hidden md:block"> {t("preview")}</span>
               </button>
               <button
+                // onClick={() => {
+                //   setPreviewMode("title");
+                //   generatePreview();
+                // }}
+
                 onClick={() => {
                   setPreviewMode("title");
-                  generatePreview();
+                  setShowExportModal(true);
                 }}
                 className="flex items-center justify-center text-sm gap-2 px-2 py-2 md:px-4 md:py-2 bg-rose-600 text-white rounded hover:bg-rose-700 transition-all"
               >
@@ -313,7 +382,7 @@ export default function WorksList({
                             className={`w-full h-full object-cover transition-all ease-in select-none pointer-events-none ${
                               checked.includes(w.id)
                                 ? "brightness-100"
-                                : "brightness-30"
+                                : "brightness-40"
                             }`}
                             draggable="false"
                           />
@@ -352,7 +421,15 @@ export default function WorksList({
           <p>制作 || しゅうちゃん</p>
         </div>
       </div>
-      <ExportPreview ref={previewRef}>
+      <ExportPreviewHtmlModal
+        show={showExportModal}
+        onClose={() => setShowExportModal(false)}
+        onDownload={handleExportDownload}
+        downloading={downloading}
+        previewRef={exportPreviewRef}
+        width={1920}
+        bgColor="#1d293d"
+      >
         <div data-export-preview id="preview-layout">
           {previewMode === "image" ? (
             <ExportPreviewFlatGrid
@@ -374,7 +451,8 @@ export default function WorksList({
             />
           )}
         </div>
-      </ExportPreview>
+      </ExportPreviewHtmlModal>
+
       <PreviewModal
         show={showModal}
         onClose={() => setShowModal(false)}
