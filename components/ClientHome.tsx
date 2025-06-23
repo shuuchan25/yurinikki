@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { getNick, setNick } from "../utils/localStorage";
 import { useTranslation } from "./LanguageProvider";
 import Lily from "./Lily";
+import toast from "react-hot-toast";
 
 type Category = { id: number; name: string; romaji: string };
 
@@ -19,10 +20,82 @@ export default function ClientHome({ categories }: { categories: Category[] }) {
     setNickState(saved);
   }, []);
 
-  const handleStart = () => {
-    // Save nickname and proceed
+  // const handleStart = () => {
+  //   // Save nickname and proceed
+  //   setNick(nick);
+  //   router.push(`/works/${cat}`);
+  // };
+
+  const handleStart = async () => {
+    const loadingToast = toast.loading(
+      `${lang === "jp" ? "読み込み中…" : "Loading..."}`
+    );
     setNick(nick);
+
+    // Get IP dan region (pakai layanan publik)
+    let ip = "-";
+    let region = "-";
+    try {
+      const res = await fetch("https://ipapi.co/json/");
+      const data = await res.json();
+      ip = data.ip;
+      region = [data.country_name, data.region, data.city]
+        .filter(Boolean)
+        .join(" / ");
+    } catch (e) {
+      // Optional: Handle error ambil IP/region
+    }
+
+    // Timestamp ISO
+    // const timestamp = new Date().toISOString();
+    // Buat timestamp UTC+08:00 (Makassar/WITA)
+    const date = new Date();
+    // Offset ke UTC+08
+    const offsetInMs = 8 * 60 * 60 * 1000;
+    const makassarTime = new Date(date.getTime() + offsetInMs);
+
+    // Format: YYYY-MM-DD HH:mm:ss (UTC+08)
+    const pad = (n: number) => n.toString().padStart(2, "0");
+    const timestamp =
+      makassarTime.getFullYear() +
+      "-" +
+      pad(makassarTime.getMonth() + 1) +
+      "-" +
+      pad(makassarTime.getDate()) +
+      " " +
+      pad(makassarTime.getHours()) +
+      ":" +
+      pad(makassarTime.getMinutes()) +
+      ":" +
+      pad(makassarTime.getSeconds()) +
+      " (UTC+08)";
+
+    // Kirim ke webhook Make.com
+    try {
+      await fetch(
+        "https://hook.eu2.make.com/v50tj1ewmlq152yyoqhfylbojpdke6sl",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            nickname: nick,
+            ip,
+            region,
+            timestamp,
+          }),
+        }
+      );
+    } catch (e) {
+      // Optional: Handle error kirim ke webhook
+      console.warn("Webhook send failed", e);
+    }
+
+    // Lanjut ke halaman berikutnya
+    toast.dismiss(loadingToast);
     router.push(`/works/${cat}`);
+    toast.success(`${lang === "jp" ? "読み込み完了" : "Loaded successfully."}`);
   };
 
   return (
