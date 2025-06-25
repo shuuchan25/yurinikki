@@ -151,8 +151,12 @@ export default function ExportPreviewFlatGridTextOnly({
         </div>
         <div>
           <div className="flex flex-col items-center">
-            <h1 className="nickname">{nickname}</h1>
-            <h1 className="sentence">{t("previewSentence")}</h1>
+            {/* <h1 className="nickname">{nickname}</h1> */}
+            <h1 className="sentence">
+              {lang === "jp"
+                ? `これまでに${nickname}が観てきた百合アニメ`
+                : `Yuri Anime ${nickname} has watched`}
+            </h1>
             <p className="text-[#ff2056] text-[72px] font-bold">
               {lang === "jp"
                 ? `${checked.length}件 / `
