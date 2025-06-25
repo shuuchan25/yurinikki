@@ -49,28 +49,28 @@ body {
   text-align: center;
 }
 
-.preview__item__wrapper {
-  align-items: stretch;
-}
+/* .preview__item__wrapper { */
+/* width: 1920px; */
+/* align-items: stretch; */
+/* } */
 
 .preview__item {
   /* Ganti '.preview__item' dengan nama kelas yang kamu inginkan */
   display: flex;
   flex-direction: column;
-  justify-content: center;
-  align-items: center;
+  /* justify-content: center; */
+  /* align-items: center; */
   /* width: 120px; */
-  height: 130px;
-  padding-left: 0.5rem; /* px-2 */
-  padding-right: 0.5rem; /* px-2 */
-  padding-top: 0.75rem; /* py-3 */
-  padding-bottom: 0.75rem; /* py-3 */
+  height: 135px;
+  padding-left: 0.4rem; /* px-2 */
+  padding-right: 0.4rem; /* px-2 */
+  padding-top: 0.5rem; /* py-3 */
+  padding-bottom: 0.5rem; /* py-3 */
   border-radius: 0.25rem; /* rounded */
   font-weight: 600; /* font-bold */
-  font-size: 0.875rem; /* text-sm */
-  color: #f9fafb; /* text-[#f9fafb] */
+  font-size: 1.3rem; /* text-sm */
+  color: #0e1c2a; /* text-[#f9fafb] */
   user-select: none; /* select-none */
-  transition: all 0.15s ease-in-out; /* transition (untuk transisi umum, sesuaikan durasi dan easing jika perlu) */
 }
 
 .yurinohi {

@@ -32,7 +32,7 @@ export default function ExportPreviewFlatGridFilled({
     (a, b) => a.releaseYear - b.releaseYear || a.id - b.id
   );
 
-  const columns = 18; // jumlah kolom per baris
+  const columns = 14; // jumlah kolom per baris
   const totalItems = sorted.length;
 
   // Bagi dua, lalu bulatkan ke kelipatan columns terdekat, tapi tidak lebih dari totalItems
@@ -51,7 +51,7 @@ export default function ExportPreviewFlatGridFilled({
 
   // 1. Grid atas
   elements.push(
-    <div className="grid grid-cols-18 gap-1" key="top-items">
+    <div className="grid grid-cols-14 gap-1" key="top-items">
       {topItems.map((w) => (
         <div
           key={w.id}
@@ -133,7 +133,7 @@ export default function ExportPreviewFlatGridFilled({
 
   // 3. Grid bawah
   elements.push(
-    <div className="grid grid-cols-18 gap-1" key="bottom-items">
+    <div className="grid grid-cols-14 gap-1" key="bottom-items">
       {bottomItems.map((w) => (
         <div
           key={w.id}

@@ -211,11 +211,12 @@ export default function WorksList({
       });
 
       // 2. Kecilkan skala hasil PNG
-      const scaledUrl = await scaleImageDataUrl(dataUrl, 0.5); // Ganti 0.5 sesuai kebutuhan!
+      const scaledUrl = await scaleImageDataUrl(dataUrl, 0.3); // Ganti 0.5 sesuai kebutuhan!
 
       // 3. Download
       const a = document.createElement("a");
       a.href = scaledUrl;
+      // a.href = dataUrl;
       a.download = `yurinikki_${categoryRomaji}.png`;
       a.click();
       toast.success("Image downloaded!");
@@ -417,8 +418,16 @@ export default function WorksList({
 
       <div className="w-full flex items-center justify-center pt-4 px-2 mt-12 border-t">
         <div className="footer__info text-center">
-          <p>百合日記 || yurinikki.vercel.app</p>
-          <p>制作 || しゅうちゃん</p>
+          <p>
+            百合日記 <span className="mx-2">|</span> Yuri Journal{" "}
+            <span className="mx-2">|</span> yurinikki.vercel.app
+          </p>
+          <p>
+            制作 <span className="mx-2">|</span>しゅうちゃん{" "}
+            <span className="mx-2">||</span> テスター
+            <span className="mx-2">|</span> Seno
+          </p>
+          <p></p>
         </div>
       </div>
       <ExportPreviewHtmlModal
@@ -430,27 +439,27 @@ export default function WorksList({
         width={1920}
         bgColor="#1d293d"
       >
-        <div data-export-preview id="preview-layout">
-          {previewMode === "image" ? (
-            <ExportPreviewFlatGrid
-              works={works}
-              checked={checked}
-              lang={lang}
-              categoryName={categoryName}
-              categoryRomaji={categoryRomaji}
-              nickname={nickname ?? ""}
-            />
-          ) : (
-            <ExportPreviewTextOnly
-              works={works}
-              checked={checked}
-              lang={lang}
-              categoryName={categoryName}
-              categoryRomaji={categoryRomaji}
-              nickname={nickname ?? ""}
-            />
-          )}
-        </div>
+        {/* <div data-export-preview id="preview-layout"> */}
+        {previewMode === "image" ? (
+          <ExportPreviewFlatGrid
+            works={works}
+            checked={checked}
+            lang={lang}
+            categoryName={categoryName}
+            categoryRomaji={categoryRomaji}
+            nickname={nickname ?? ""}
+          />
+        ) : (
+          <ExportPreviewTextOnly
+            works={works}
+            checked={checked}
+            lang={lang}
+            categoryName={categoryName}
+            categoryRomaji={categoryRomaji}
+            nickname={nickname ?? ""}
+          />
+        )}
+        {/* </div> */}
       </ExportPreviewHtmlModal>
 
       <PreviewModal

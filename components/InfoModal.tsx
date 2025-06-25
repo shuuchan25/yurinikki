@@ -56,7 +56,7 @@ export default function InfoModal({
             <>
               <p className="font-bold mb-2">※ ご注意ください！</p>
               <p className="text-sm text-justify">
-                このリストには公式な百合・GLアニメだけでなく、開発者の「百合メガネ」を通して選ばれた、日常系アニメや百合要素の強い作品、女の子同士の強いカップリングが見られるアニメも含まれています。
+                このリストには公式な百合・GLアニメだけでなく、開発者の「百合メガネ」を通して選ばれた、日常系アニメや百合要素の強い作品、女の子同士の強いカップリングが見られるアニメも含まれています。**このリストは今期放送中のアニメまでが対象です。**
                 もしリストにない百合アニメがあれば、ぜひ教えていただけると嬉しいです。
                 <br />
                 <br />
@@ -70,10 +70,11 @@ export default function InfoModal({
               <p className="font-bold mb-2">※ Please Note!</p>
               <p className="text-sm text-justify">
                 This list includes not only officially recognized Yuri/GL anime,
-                but also series that fit the developer's "Yuri Goggle", such as
+                but also series that fit the developer's "Yuri Goggle," such as
                 slice-of-life anime with strong Yuri elements or prominent
-                girl-on-girl pairings. If you know of any Yuri anime not yet on
-                the list, we'd be very happy if you could let us know!
+                girl-on-girl pairings. **This list covers anime airing up to the
+                current season.** If you know of any Yuri anime not yet on the
+                list, we'd be very happy if you could let us know!
                 <br />
                 <br /> If you have any feedback or reports, please send a DM
                 (Direct Message) to our X (formerly Twitter) account:
